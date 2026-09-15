@@ -126,27 +126,22 @@ export async function middleware(request: NextRequest) {
   // Log to console (structured JSON)
   console.log(JSON.stringify(auditLog));
 
-  // Optionally send to external logging endpoint
-  await sendAuditLog(auditLog);
+  // Send to Redis (via the /api/audit-log route — middleware runs on the Edge
+  // runtime and can't use ioredis directly, see route.ts for why)
+  await sendAuditLog(auditLog, request.nextUrl.origin);
 
   return response;
 }
 
 /**
- * Sends audit log to external endpoint
+ * Publishes the audit log to Redis via the internal /api/audit-log route.
  * @param auditLog - Audit log object
+ * @param origin - Request origin, used to build an absolute URL for the fetch
+ *   (middleware's fetch can't use relative paths)
  */
-async function sendAuditLog(auditLog: AuditLog): Promise<void> {
-  // Edge Runtime compatible environment variable access
-  const logEndpoint = process.env.NEXT_PUBLIC_LOG_ENDPOINT;
-  
-  if (!logEndpoint) {
-    // No endpoint configured, skip
-    return;
-  }
-
+async function sendAuditLog(auditLog: AuditLog, origin: string): Promise<void> {
   try {
-    const response = await fetch(logEndpoint, {
+    const response = await fetch(`${origin}/api/audit-log`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -171,7 +166,9 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public folder files
+     * - api/audit-log (the route this middleware posts to — excluded so
+     *   logging that request doesn't recurse into itself)
      */
-    '/((?!_next/static|_next/image|favicon.ico|scan-static).*)',
+    '/((?!_next/static|_next/image|favicon.ico|scan-static|api/audit-log).*)',
   ],
 };
