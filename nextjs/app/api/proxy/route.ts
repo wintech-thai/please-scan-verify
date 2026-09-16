@@ -41,6 +41,11 @@ function decodeProxyUrl(encodedUrl: string): string {
       "scan.please-scan.com",
       "api-staging.please-scan.com",
       "scan-staging.please-scan.com",
+      // On-prem domains (naming convention: same name + "2", see x075)
+      "api2-dev.please-scan.com",
+      "scan2-dev.please-scan.com",
+      "api2.please-scan.com",
+      "scan2.please-scan.com",
       "localhost", // For local development
       "127.0.0.1", // For local development
     ];
