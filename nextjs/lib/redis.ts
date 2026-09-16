@@ -93,8 +93,12 @@ export function validateConfiguration(): void {
  * @returns Redis client or null if connection fails
  */
 export function getRedisClient(): RedisClient | null {
-  // Return existing client if already connected
-  if (redisClient && redisClient.status === "ready") {
+  // Return the existing client even while it's still connecting - creating a
+  // second client here on every call until the first one reaches "ready"
+  // just stacks up redundant connection attempts. With enableOfflineQueue
+  // true (see below), commands issued on a not-yet-ready client are queued
+  // and flushed automatically once the connection completes.
+  if (redisClient) {
     return redisClient;
   }
 
@@ -123,7 +127,11 @@ export function getRedisClient(): RedisClient | null {
         return delay;
       },
       maxRetriesPerRequest: 3,
-      enableOfflineQueue: false,
+      // Queue commands issued before the connection is ready instead of
+      // throwing "Stream isn't writeable" - fixes a real bug where the very
+      // first request to a freshly-restarted pod (before Redis finishes
+      // connecting) failed to load the encryption config, breaking Verify.
+      enableOfflineQueue: true,
       lazyConnect: false,
     };
 
