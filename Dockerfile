@@ -1,7 +1,7 @@
 # -------------------------------
 # Stage 1: Dependencies
 # -------------------------------
-FROM node:22.17.1-alpine3.22 AS deps
+FROM node:22.23.4-alpine AS deps
 WORKDIR /app
 
 # Install dependencies only when needed
@@ -13,7 +13,7 @@ RUN npm install
 # -------------------------------
 # Stage 2: Builder
 # -------------------------------
-FROM node:22.17.1-alpine3.22 AS builder
+FROM node:22.23.4-alpine AS builder
 WORKDIR /app
 
 # Accept build arguments for version tracking
@@ -57,7 +57,7 @@ RUN echo "Checking public folder after build:" && ls -la /app/public || echo "Pu
 # -------------------------------
 # Stage 3: Runner
 # -------------------------------
-FROM node:22.17.1-alpine3.22 AS runner
+FROM node:22.23.4-alpine AS runner
 WORKDIR /app
 
 # Accept runtime environment argument
